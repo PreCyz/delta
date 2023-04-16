@@ -54,11 +54,11 @@ public class DeltaApplication {
                     .withService(listenerConfiguration)
                     .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofMinutes(cacheDuration)));
 
-            javax.cache.configuration.Configuration<Object, Object> longBigDecimalConfig =
+            javax.cache.configuration.Configuration<Object, Object> cacheConfig =
                     Eh107Configuration.fromEhcacheCacheConfiguration(configuration);
 
             for (String cacheName : cacheNames) {
-                cacheManager.createCache(cacheName, longBigDecimalConfig);
+                cacheManager.createCache(cacheName, cacheConfig);
             }
             return cacheManager;
         }
