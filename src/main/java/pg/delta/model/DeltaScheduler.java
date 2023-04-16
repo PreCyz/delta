@@ -1,9 +1,8 @@
-package pg.delta;
+package pg.delta.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -12,7 +11,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Predicate;
 
-@Service
 public class DeltaScheduler {
     private final Logger log;
     private final ModelRepository modelRepository;
@@ -24,11 +22,12 @@ public class DeltaScheduler {
         log = LoggerFactory.getLogger(getClass());
     }
 
-    @Scheduled(fixedRate = 1000 * 60 * 60 * 5L, initialDelay = 2L)
+    @Scheduled(cron = "${delta-cron}")
     public void generateDelta() {
         Map<LocalDate, Model> delta = modelRepository.generateDelta(LocalDate.now().minusDays(30));
         Cache<Object, Object> deltaCache = ehCacheManager.getCache("deltaCache");
-        deltaCache.clear();
+        //its either here clear cache or on the method generateDelta with CacheEvict
+        //deltaCache.clear();
 
         for (Map.Entry<LocalDate, Model> entry : delta.entrySet()) {
             Predicate<Model> cachePredicate = it -> it.changeDateTime().toLocalDate().isAfter(entry.getKey()) ||

@@ -1,4 +1,4 @@
-package pg.delta;
+package pg.delta.model;
 
 import java.time.LocalDateTime;
 

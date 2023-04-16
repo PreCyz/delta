@@ -1,6 +1,6 @@
-package pg.delta;
+package pg.delta.model;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Repository
 public class ModelRepository {
 
     private final List<Model> mockedData = List.of(
@@ -51,7 +50,7 @@ public class ModelRepository {
                 .toList();
     }
 
-    //@CacheEvict(cacheNames = "deltaCache")
+    @CacheEvict(cacheNames = "deltaCache")
     public Map<LocalDate, Model> generateDelta(LocalDate localDate) {
         Predicate<Model> changePredicate = it -> it.changeDateTime().toLocalDate().isAfter(localDate) ||
                 it.changeDateTime().toLocalDate().isEqual(localDate);

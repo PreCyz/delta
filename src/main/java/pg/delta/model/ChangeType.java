@@ -1,4 +1,4 @@
-package pg.delta;
+package pg.delta.model;
 
 public enum ChangeType {
     CREATED,

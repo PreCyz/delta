@@ -1,4 +1,4 @@
-package pg.delta;
+package pg.delta.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

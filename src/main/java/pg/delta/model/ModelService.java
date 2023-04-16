@@ -1,15 +1,13 @@
-package pg.delta;
+package pg.delta.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Service
 public class ModelService {
 
     private final Logger log;

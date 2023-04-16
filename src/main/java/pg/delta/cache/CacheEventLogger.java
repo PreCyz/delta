@@ -1,10 +1,10 @@
-package pg.delta;
+package pg.delta.cache;
 
 import org.ehcache.event.CacheEvent;
 import org.ehcache.event.CacheEventListener;
 import org.slf4j.LoggerFactory;
 
-class CacheEventLogger implements CacheEventListener<Object, Object> {
+public class CacheEventLogger implements CacheEventListener<Object, Object> {
     @Override
     public void onEvent(CacheEvent<?, ?> cacheEvent) {
         LoggerFactory.getLogger(getClass())
