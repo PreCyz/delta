@@ -3,20 +3,26 @@ package pg.delta;
 import org.ehcache.config.builders.*;
 import org.ehcache.event.EventType;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.boot.context.event.ApplicationStartingEvent;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.stereotype.Component;
 import pg.delta.cache.CacheEventLogger;
 import pg.delta.model.*;
 
 import javax.cache.CacheManager;
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
-import java.time.Duration;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -77,6 +83,28 @@ public class DeltaApplication {
         public DeltaScheduler deltaScheduler(ModelRepository modelRepository, CacheManager ehCacheManager) {
             return new DeltaScheduler(modelRepository, ehCacheManager);
 
+        }
+    }
+
+    @Component
+    public static class ApplicationStartingListener implements ApplicationListener<ApplicationStartingEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationStartingEvent event) {
+            String msg = String.format("I'm starting %s%n",
+                    LocalDateTime.ofEpochSecond(event.getTimestamp(), 0, ZoneOffset.UTC)
+                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            );
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info(msg);
+        }
+    }
+
+    @Component
+    public static class ApplicationStartedListener implements ApplicationListener<ApplicationStartedEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationStartedEvent event) {
+            double l = event.getTimeTaken().toMillis() / 1000d;
+            String msg = String.format("I'm started in %1.3f seconds%n", l);
+            LoggerFactory.getLogger(ApplicationStartedListener.class).info(msg);
         }
     }
 
