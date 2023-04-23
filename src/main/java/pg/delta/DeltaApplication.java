@@ -13,7 +13,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.stereotype.Component;
 import pg.delta.cache.CacheEventLogger;
 import pg.delta.model.*;
 
@@ -83,75 +82,62 @@ public class DeltaApplication {
             return new DeltaScheduler(modelRepository, ehCacheManager);
 
         }
-    }
 
-    @Component
-    public static class ApplicationStartingListener implements ApplicationListener<ApplicationStartingEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationStartingEvent event) {
-            String msg = String.format("I'm starting %s",
-                    LocalDateTime.ofEpochSecond(event.getTimestamp(), 0, ZoneOffset.UTC)
-                            .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            );
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info(msg);
+        @Bean
+        public ApplicationListener<ApplicationStartingEvent> applicationStartingListener() {
+            return event -> {
+                String msg = String.format("I'm starting %s",
+                        LocalDateTime.ofEpochSecond(event.getTimestamp(), 0, ZoneOffset.UTC)
+                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                );
+                LoggerFactory.getLogger(getClass()).info(msg);
+            };
         }
-    }
-
-    @Component
-    public static class ApplicationStartedListener implements ApplicationListener<ApplicationStartedEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationStartedEvent event) {
-            double l = event.getTimeTaken().toMillis() / 1000d;
-            String msg = String.format("I'm started in %1.3f seconds%n", l);
-            LoggerFactory.getLogger(ApplicationStartedListener.class).info(msg);
-        }
-    }
-
-    @Component
-    public static class ApplicationContextInitializedListener implements ApplicationListener<ApplicationContextInitializedEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationContextInitializedEvent event) {
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application context initialized");
-        }
-    }
-
-    @Component
-    public static class ApplicationEnvironmentListener implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application environment prepared");
-        }
-    }
-
-    @Component
-    public static class ApplicationPreparedListener implements ApplicationListener<ApplicationPreparedEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationPreparedEvent event) {
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application prepared");
-        }
-    }
-
-    @Component
-    public static class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
-        private final DeltaScheduler deltaScheduler;
-
-        public ApplicationReadyListener(DeltaScheduler deltaScheduler) {
-            this.deltaScheduler = deltaScheduler;
+        @Bean
+        public ApplicationListener<ApplicationStartedEvent> applicationStartedListener() {
+            return  event -> {
+                double l = event.getTimeTaken().toMillis() / 1000d;
+                String msg = String.format("I'm started in %1.3f seconds%n", l);
+                LoggerFactory.getLogger(getClass()).info(msg);
+            };
         }
 
-        @Override
-        public void onApplicationEvent(ApplicationReadyEvent event) {
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application ready");
-            deltaScheduler.generateDelta();
+        @Bean
+        public ApplicationListener<ApplicationContextInitializedEvent> applicationContextInitializedListener() {
+            return event -> {
+                LoggerFactory.getLogger(getClass()).info("Application context initialized");
+            };
         }
-    }
 
-    @Component
-    public static class ApplicationFailedListener implements ApplicationListener<ApplicationFailedEvent> {
-        @Override
-        public void onApplicationEvent(ApplicationFailedEvent event) {
-            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application failed");
+        @Bean
+        public ApplicationListener<ApplicationEnvironmentPreparedEvent> applicationEnvironmentListener() {
+            return event -> {
+                LoggerFactory.getLogger(getClass()).info("Application environment prepared");
+            };
         }
+
+        @Bean
+        public ApplicationListener<ApplicationPreparedEvent> applicationPreparedListener() {
+            return event -> {
+                LoggerFactory.getLogger(getClass()).info("Application prepared");
+            };
+        }
+
+        @Bean
+        public ApplicationListener<ApplicationReadyEvent> applicationReadyListener(final DeltaScheduler deltaScheduler) {
+            return event -> {
+                LoggerFactory.getLogger(getClass()).info("Application ready");
+                deltaScheduler.generateDelta();
+            };
+        }
+
+        @Bean
+        public ApplicationListener<ApplicationFailedEvent> applicationFailedListener() {
+            return event -> {
+                LoggerFactory.getLogger(getClass()).info("Application failed");
+            };
+        }
+
     }
 
 }
