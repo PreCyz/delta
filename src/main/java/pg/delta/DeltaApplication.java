@@ -7,8 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.boot.context.event.ApplicationStartingEvent;
+import org.springframework.boot.context.event.*;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -90,7 +89,7 @@ public class DeltaApplication {
     public static class ApplicationStartingListener implements ApplicationListener<ApplicationStartingEvent> {
         @Override
         public void onApplicationEvent(ApplicationStartingEvent event) {
-            String msg = String.format("I'm starting %s%n",
+            String msg = String.format("I'm starting %s",
                     LocalDateTime.ofEpochSecond(event.getTimestamp(), 0, ZoneOffset.UTC)
                             .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             );
@@ -105,6 +104,53 @@ public class DeltaApplication {
             double l = event.getTimeTaken().toMillis() / 1000d;
             String msg = String.format("I'm started in %1.3f seconds%n", l);
             LoggerFactory.getLogger(ApplicationStartedListener.class).info(msg);
+        }
+    }
+
+    @Component
+    public static class ApplicationContextInitializedListener implements ApplicationListener<ApplicationContextInitializedEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationContextInitializedEvent event) {
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application context initialized");
+        }
+    }
+
+    @Component
+    public static class ApplicationEnvironmentListener implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application environment prepared");
+        }
+    }
+
+    @Component
+    public static class ApplicationPreparedListener implements ApplicationListener<ApplicationPreparedEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationPreparedEvent event) {
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application prepared");
+        }
+    }
+
+    @Component
+    public static class ApplicationReadyListener implements ApplicationListener<ApplicationReadyEvent> {
+        private final DeltaScheduler deltaScheduler;
+
+        public ApplicationReadyListener(DeltaScheduler deltaScheduler) {
+            this.deltaScheduler = deltaScheduler;
+        }
+
+        @Override
+        public void onApplicationEvent(ApplicationReadyEvent event) {
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application ready");
+            deltaScheduler.generateDelta();
+        }
+    }
+
+    @Component
+    public static class ApplicationFailedListener implements ApplicationListener<ApplicationFailedEvent> {
+        @Override
+        public void onApplicationEvent(ApplicationFailedEvent event) {
+            LoggerFactory.getLogger(ApplicationStartingListener.class).info("Application failed");
         }
     }
 
