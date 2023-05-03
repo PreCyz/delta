@@ -68,47 +68,58 @@ public class CompletableFutureTest {
     void name3() {
         long start = System.currentTimeMillis();
         CompletableFuture.allOf(
-                createCompletableFuture(1_000_000, "1").thenAcceptAsync(
-                        a -> createCompletableFuture(2_000_000, "a1").join(), EXECUTOR
+                createCF(1_000_000, "1").thenAcceptAsync(
+                        a -> createCF(2_000_000, "a1").join(), EXECUTOR
                 ).whenComplete((v, t) -> System.out.printf("Group 1 duration %s%n", formatDuration(System.currentTimeMillis() - start))),
 
-                createCompletableFuture(4_000_000, "2").thenAcceptAsync(
-                        a -> createCompletableFuture(1_000_000, "a2").thenAcceptAsync(
-                                b -> createCompletableFuture(2_000_000, "b1").join(), EXECUTOR
+                createCF(4_000_000, "2").thenAcceptAsync(
+                        a -> createCF(1_000_000, "a2").thenAcceptAsync(
+                                b -> createCF(2_000_000, "b1").join(), EXECUTOR
                         ).join(), EXECUTOR
                 ).whenComplete((v, t) -> System.out.printf("Group 2 duration %s%n", formatDuration(System.currentTimeMillis() - start))),
 
-                createCompletableFuture(3_000_000, "11").thenAcceptAsync(
-                        a -> createCompletableFuture(1_000_000, "a3").join(), EXECUTOR
+                createCF(4_000_000, "3").thenAccept(
+                        a -> createCF(1_000_000, "a5").thenRun(createRunnable(20_000_000, "r3")).join()
+                ).whenComplete((v, t) -> System.out.printf("Group 3 duration %s%n", formatDuration(System.currentTimeMillis() - start))),
+
+                createCF(3_000_000, "11").thenAcceptAsync(
+                        a -> createCF(1_000_000, "a3").join(), EXECUTOR
                 ).whenComplete((v, t) -> System.out.printf("Group 11 duration %s%n", formatDuration(System.currentTimeMillis() - start))),
 
-                createCompletableFuture(2_000_000, "12").thenAcceptAsync(
-                        a -> createCompletableFuture(5_000_000, "a4").thenAcceptAsync(
-                                b -> createCompletableFuture(2_000_000, "b2").join(), EXECUTOR
+                createCF(2_000_000, "12").thenAcceptAsync(
+                        a -> createCF(5_000_000, "a4").thenAcceptAsync(
+                                b -> createCF(2_000_000, "b2").join(), EXECUTOR
                         ).join(), EXECUTOR
                 ).whenComplete((v, t) -> System.out.printf("Group 12 duration %s%n", formatDuration(System.currentTimeMillis() - start))),
 
-                createCompletableFuture(10_500_000, "20"),
-                createCompletableFuture(15_500_000, "21")
+                createCF(10_500_000, "20").thenRun(createRunnable(5_000_000, "r1")),
+                createCF(15_500_000, "21").thenRun(createRunnable(2_000_000, "r2"))
         ).join();
         System.out.println();
         //sleepEnough();
         System.out.printf("Duration %s", formatDuration(System.currentTimeMillis() - start));
     }
 
-    CompletableFuture<Void> createCompletableFuture(int limit, String name) {
-        return CompletableFuture.runAsync(() -> {
-                    var start = System.currentTimeMillis();
-                    List<Integer> list = Stream.generate(() -> new Random().nextInt(1000))
-                            .limit(limit)
-                            .toList();
-                    System.out.printf("%2s-done, %08d, duration %2s, %s%n",
-                            name,
-                            list.size(),
-                            formatDuration(System.currentTimeMillis() - start),
-                            Thread.currentThread().getName()
-                    );
-                }, EXECUTOR
-        );
+    CompletableFuture<Void> createCF(final int limit, final String name) {
+        return CompletableFuture.runAsync(createRunnable(limit, name), EXECUTOR);
+    }
+
+    CompletableFuture<Void> createCF(Runnable runnable) {
+        return CompletableFuture.runAsync(runnable, EXECUTOR);
+    }
+
+    private Runnable createRunnable(int limit, String name) {
+        return () -> {
+            var start = System.currentTimeMillis();
+            List<Integer> list = Stream.generate(() -> new Random().nextInt(1000))
+                    .limit(limit)
+                    .toList();
+            System.out.printf("%2s-done, %08d, duration %2s, %s%n",
+                    name,
+                    list.size(),
+                    formatDuration(System.currentTimeMillis() - start),
+                    Thread.currentThread().getName()
+            );
+        };
     }
 }
